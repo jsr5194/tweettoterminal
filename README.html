@@ -1,0 +1,56 @@
+<html>
+<p>While I was at Shmoocon this past year I heard a talk that gave me an idea for a project. The project: create a program that will allow me to run commands in terminal from Twitter. Given the obvious security risks involved with this program, I would not suggest actually using this to run commands. This method uses the twitter dev tools, a twitter api wrapper named python-twitter and your computer's terminal.,</p><br>
+<h3>The Idea</h3>
+<p>The talk that inspired this project was given by @obscuresec. He used this idea in conjunction with other techniques in order to complete a proof of concept. If you want to find out more about @obscuresec's project, you can visit his site here. http://obscuresecurity.blogspot.com/2013/02/shmoocon-firetalks-and-epilogue.html</p><br>
+<h3>Creating the Twitter App</h3>
+<p>In order to access the twitter API, I needed to acquire four different keys: consumer key, consumer secret, access token key, and access token secret. Finding these keys gave me a hard time at first. After searching for a long time, I found out that in order to get these keys, I need to create a twitter app that links to my account. In order to create an app, I went to http://dev.twitter.com where I was able to get access to Twitter's dev tools. After logging in, I created a new app by clicking on the dropdown menu over my account picture and choosing 'my applications.' If you have never made an application before, this window will most likely be blank. Click the 'create a new application' button and follow through the prompts until you have successfully created an application.
+<br><br>
+<p>Now click on your app in order to open it and edit the settings. Click on the 'settings' tab and look about halfway down the screen. You will see a Title named 'Application Type' with a subsection that allows you to set the access permissions for your app. For this project you need to select the 'Read, Write, and Access direct messages' option. In that same section, check the "Allow this application to be used to Sign in with Twitter' box. This will allow your app to sign in by itself. Scroll to the bottom of the page and click the 'Update this Twitter application's settings' button.
+<br><br> 
+Now that the settings are set up, it is time to set up the access token that will allow your future script to use twitter. In order to do this, click the 'Details' tab at the top and scroll down to the bottom of the page. Click the 'Create my access token' button. Once this finishes, scroll back to the top of the page and click on the 'OAuth tool' tab. This tab contains all of the keys that you will need later. Keep this page open, or copy down the consumer key, consumer secret, access token, and access token secret. </p><br>
+<h3>Python-Twitter</h3>
+<p>In order to interact with the Twitter API, I opted to use a python wrapper named python-twitter. Downloads and documentation is included at https://code.google.com/p/python-twitter/. Download and install python-twitter before continuing. There are other versions out there if you decide that you do not like python-twitter.</p><br>
+<h3>The Code</h3>
+<p>For this script to run, we are going to need to import three libraries: sys, os, and twitter. In order to interact with your account from python-twitter, you need to conform to Twitter's OAuth requirements. This is where those four keys you got earlier come in. From the python-twitter documentation, we find the authentication is defined in the following way.</p><br>
+<code>api = twitter.Api(
+    consumer_key='CONSUMER KEY', 
+    consumer_secret = 'CONSUMER SECRET', 
+    access_token_key='ACCESS TOKEN KEY ', 
+    access_token_secret='ACCESS TOKEN SECRET')
+</code><br>
+<p>Once you are authenticated, it is time to interact with the API to get what you want from Twitter. In this case, we are looking to pull down a tweet from the timeline. To do this, we are going to use the 'GetUserTimeline' function within python-twitter. At first this threw me since it returned every post on the timeline. I managed to get around this problem by deciding to append a tag at the beginning of whatever command I wanted to run. I chose to add the string '~start' to the front of all of my commands. This allowed me to parse the array that was returned by 'GetUserTimeline'  for only what I wanted. Due to this, I knew that I would have to offset the text that I read in as a command as well. Below is my implementation of this.</p><br>
+<code>timeline= [] 
+letters = []
+command_temp = []
+command = ''
+i = 7 #this is to offset the filter
+timeline= api.GetUserTimeline('YOURUSERNAME')
+for s in timeline:
+    if '~start' in s.text:
+	letters = [g for g in s.text]
+	length = len(letters)
+	command_temp = [letters[i] for i in range(7, length)]
+	command = ''.join(command_temp)
+	print 'Command about to run:  ' , command
+	break #this ensures that only one command will come in
+else:
+	pass
+</code><br>
+<p>Next, I wanted to implement something so that in the event that another person tried to use this against me, I would have a chance to not let the command run. In order to implement this, I require the user to allow the command to occur.</p><br>
+<code>try:
+    raw_input('>>(Hit Enter to run, CTRL-C to quit): ')
+    print 'you continued'
+except KeyboardInterrupt:
+    print '\nyou exited'
+    sys.exit()
+</code>
+<br>
+<p>Finally, I printed out the command that was about to run on the screen and used python's ability to run commands to actually execute the command. Once this is done, you should be good to go.</p><br>
+<code>print command
+os.system(command)
+</code><br>
+<h3>The Result</h3>
+<p>Now that you have everything set up and ready to go, start your python script that you wrote.
+Since you do not yet have any commands coming down, it will not show anything. Now you need to craft your command on twitter. Simply start a new tweet like normal, type your filter and then your command. For example, <code>~start echo 'Hello World'</code> Now tweet it and watch your terminal. 
+Now just hit enter and let it run. Thanks for reading.
+</html>
